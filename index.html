@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FokusKu</title>
+  <meta name="description" content="Mockup MVP FokusKu: pendamping belajar yang mengenali tanda distraksi lewat kamera (diproses di perangkat) dan mengingatkan tugas serta jadwal ujian." />
+  <meta name="theme-color" content="#0A2F27" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%2316705B'/%3E%3Ccircle cx='20' cy='20' r='10' fill='none' stroke='white' stroke-width='3.2'/%3E%3Ccircle cx='20' cy='20' r='3.6' fill='%23F5B83D'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            canvas: '#EDF1EE',
+            ink: { DEFAULT: '#13201E', soft: '#51605D', mute: '#8A9794', line: '#DCE3DE' },
+            moss: { 50: '#EEF7F4', 100: '#D5ECE5', 200: '#A9D8CB', 300: '#78C0AE', 400: '#3FA58C', 500: '#1F8A70', 600: '#16705B', 700: '#125A49', 800: '#0F4538', 900: '#0A2F27', 950: '#071F1A' },
+            sun: { 50: '#FFF8E6', 100: '#FDEEC8', 400: '#F5B83D', 500: '#EBA21A', 600: '#C9810A', 700: '#8F5A06' },
+            coral: { 50: '#FFF1EE', 100: '#FFE0D9', 400: '#F0806B', 500: '#E8573F', 600: '#CC4128', 700: '#A3301B' }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    html { -webkit-tap-highlight-color: transparent; }
+    body { min-height: 100dvh; }
+
+    /* Buttons & fields */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; border-radius: .9rem; padding: .7rem 1.15rem; font-size: .9rem; font-weight: 700; line-height: 1.2; transition: background .15s, border-color .15s, transform .1s; cursor: pointer; white-space: nowrap; }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: #16705B; color: #fff; }
+    .btn-primary:hover { background: #125A49; }
+    .btn-sun { background: #F5B83D; color: #13201E; }
+    .btn-sun:hover { background: #EBA21A; }
+    .btn-ghost { background: #fff; color: #13201E; border: 1px solid #DCE3DE; }
+    .btn-ghost:hover { border-color: #3FA58C; background: #F6FAF8; }
+    .btn-dark { background: #0F4538; color: #fff; }
+    .btn-dark:hover { background: #0A2F27; }
+    .btn-ondark { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.22); }
+    .btn-ondark:hover { background: rgba(255,255,255,.18); }
+    button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #1F8A70; outline-offset: 2px; }
+    .field { width: 100%; border: 1px solid #C9D3CD; background: #fff; border-radius: .85rem; padding: .7rem .9rem; font-size: .92rem; color: #13201E; }
+    .field:focus { border-color: #1F8A70; outline: 2px solid rgba(31,138,112,.25); outline-offset: 0; }
+
+    .switch { appearance: none; -webkit-appearance: none; flex: none; width: 2.75rem; height: 1.6rem; border-radius: 999px; background: #C3CCC6; position: relative; cursor: pointer; transition: background .2s; }
+    .switch::after { content: ""; position: absolute; top: .2rem; left: .2rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+    .switch:checked { background: #16705B; }
+    .switch:checked::after { transform: translateX(1.15rem); }
+    .switch:focus-visible { outline: 2px solid #1F8A70; outline-offset: 2px; }
+
+    /* Navigation */
+    .side-link { display: flex; align-items: center; gap: .75rem; padding: .7rem .9rem; border-radius: .9rem; color: #A9D8CB; font-weight: 600; font-size: .92rem; transition: background .15s, color .15s; }
+    .side-link i { width: 1.25rem; text-align: center; }
+    .side-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .side-link[aria-current="page"] { background: #EDF1EE; color: #0A2F27; }
+    .tab-link { display: flex; flex-direction: column; align-items: center; gap: .2rem; padding: .6rem 0 .55rem; font-size: .7rem; font-weight: 600; color: #8A9794; }
+    .tab-link i { font-size: 1.1rem; }
+    .tab-link[aria-current="page"] { color: #16705B; }
+
+    /* Dialogs */
+    dialog { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100dvh; overflow: visible; color: inherit; }
+    dialog::backdrop { background: rgba(7,31,26,.6); backdrop-filter: blur(3px); }
+    dialog[open] { animation: pop .2s ease-out; }
+    @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+
+    /* Toasts */
+    .toast { animation: toastIn .3s ease-out; }
+    .toast.out { opacity: 0; transform: translateY(-8px); transition: opacity .25s, transform .25s; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+
+    /* Charts */
+    .bar-in { transform-origin: bottom; animation: grow .7s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    #ringProg, #goalRing { transition: stroke-dashoffset .8s linear; }
+    #goalRing { transition-duration: 1s; transition-timing-function: ease-out; }
+
+    /* Camera simulation: the one memorable element */
+    #camPerson { transform-origin: 320px 250px; transition: transform .6s cubic-bezier(.3,.7,.2,1), opacity .5s; }
+    #camPhone { opacity: 0; transform: translateY(60px); transition: transform .6s cubic-bezier(.3,.7,.2,1), opacity .4s; }
+    #camBoxLost { opacity: 0; transition: opacity .4s; }
+    #camBoxFace { stroke: #78C0AE; transition: stroke .3s; }
+    #camSvg[data-state="menoleh"] #camPerson { transform: translateX(64px) rotate(12deg); }
+    #camSvg[data-state="hp"] #camPerson { transform: translateY(26px); }
+    #camSvg[data-state="hp"] #camPhone { opacity: 1; transform: none; }
+    #camSvg[data-state="pergi"] #camPerson { opacity: 0; transform: translateX(-30px); }
+    #camSvg[data-state="pergi"] #camBoxLost { opacity: 1; }
+    #camSvg[data-state="menoleh"] #camBoxFace, #camSvg[data-state="hp"] #camBoxFace { stroke: #F5B83D; }
+    .scanline { position: absolute; left: 0; right: 0; height: 90px; background: linear-gradient(to bottom, transparent, rgba(63,165,140,.2), transparent); animation: scan 4.5s linear infinite; pointer-events: none; }
+    @keyframes scan { from { top: -90px; } to { top: 100%; } }
+    .rec-dot { width: .5rem; height: .5rem; border-radius: 999px; background: #3FA58C; animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(63,165,140,.65); } 70% { box-shadow: 0 0 0 8px rgba(63,165,140,0); } 100% { box-shadow: 0 0 0 0 rgba(63,165,140,0); } }
+    #alertBanner { opacity: 0; transform: translateY(12px); transition: opacity .3s, transform .3s; pointer-events: none; }
+    #alertBanner.on { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+
+<body class="bg-canvas font-sans text-ink antialiased">
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-3 focus:py-2">Lewati ke konten</a>
+
+  <!-- Toast host -->
+  <div id="toasts" class="pointer-events-none fixed inset-x-3 top-3 z-[60] flex flex-col gap-2 sm:inset-x-auto sm:right-4 sm:w-96" aria-live="polite"></div>
+
+  <!-- Sidebar (desktop) -->
+  <aside class="fixed inset-y-0 left-0 hidden w-64 flex-col bg-moss-950 p-5 text-moss-100 lg:flex">
+    <a href="#beranda" class="mb-8 flex items-center gap-3">
+      <svg viewBox="0 0 40 40" class="h-9 w-9" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#16705B"/><circle cx="20" cy="20" r="10" fill="none" stroke="#fff" stroke-width="3.2"/><circle cx="20" cy="20" r="3.6" fill="#F5B83D"/></svg>
+      <span class="font-display text-xl font-extrabold text-white">FokusKu</span>
+    </a>
+    <nav class="space-y-1" aria-label="Navigasi utama">
+      <a href="#beranda" data-nav="beranda" class="side-link"><i class="fa-solid fa-house"></i>Beranda</a>
+      <a href="#sesi" data-nav="sesi" class="side-link"><i class="fa-solid fa-bullseye"></i>Sesi fokus</a>
+      <a href="#tugas" data-nav="tugas" class="side-link"><i class="fa-solid fa-list-check"></i>Tugas &amp; ujian</a>
+      <a href="#ringkasan" data-nav="ringkasan" class="side-link"><i class="fa-solid fa-chart-column"></i>Ringkasan</a>
+    </nav>
+    <div class="mt-auto space-y-4">
+      <div class="rounded-2xl border border-moss-800 bg-moss-900 p-4">
+        <p class="flex items-center gap-2 text-sm font-bold text-white"><i class="fa-solid fa-shield-halved text-moss-300"></i>Kamera tetap privat</p>
+        <p class="mt-1.5 text-xs leading-relaxed text-moss-200">Video diproses di perangkatmu. Tidak disimpan dan tidak dikirim ke server.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="grid h-10 w-10 place-items-center rounded-full bg-sun-400 font-display font-extrabold text-ink">R</span>
+        <div class="min-w-0">
+          <p class="truncate text-sm font-semibold text-white">Rani Pratama</p>
+          <p class="truncate text-xs text-moss-300">Teknik Informatika</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="min-h-screen pb-24 lg:pb-10 lg:pl-64">
+    <!-- Top bar -->
+    <header class="sticky top-0 z-30 border-b border-ink-line bg-canvas/85 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <a href="#beranda" class="lg:hidden" aria-label="FokusKu, ke beranda">
+          <svg viewBox="0 0 40 40" class="h-8 w-8" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#16705B"/><circle cx="20" cy="20" r="10" fill="none" stroke="#fff" stroke-width="3.2"/><circle cx="20" cy="20" r="3.6" fill="#F5B83D"/></svg>
+        </a>
+        <div class="min-w-0">
+          <p id="pageDate" class="hidden text-xs text-ink-mute sm:block"></p>
+          <h1 id="pageTitle" class="truncate font-display text-lg font-bold leading-tight sm:text-xl">Beranda</h1>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <a href="#sesi" class="btn btn-primary hidden sm:inline-flex"><i class="fa-solid fa-play text-xs"></i>Mulai sesi</a>
+          <div id="bellWrap" class="relative">
+            <button id="bellBtn" data-action="toggle-bell" class="btn btn-ghost relative !px-3.5" aria-label="Pengingat" aria-expanded="false" aria-controls="bellMenu">
+              <i class="fa-regular fa-bell"></i>
+              <span id="bellBadge" class="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-coral-500 px-1 text-[11px] font-bold text-white">0</span>
+            </button>
+            <div id="bellMenu" class="absolute right-0 z-40 mt-2 hidden w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-ink-line bg-white p-2 shadow-xl">
+              <p class="px-2.5 pb-1 pt-2 text-sm font-bold">Pengingat</p>
+              <ul id="bellList" class="max-h-80 overflow-y-auto"></ul>
+              <a href="#tugas" class="mt-1 block rounded-xl px-2.5 py-2 text-center text-sm font-semibold text-moss-700 hover:bg-moss-50">Atur pengingat</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- ============ BERANDA ============ -->
+      <section data-view="beranda" aria-label="Beranda">
+        <div class="grid gap-5 lg:grid-cols-3">
+          <div class="relative overflow-hidden rounded-3xl bg-moss-900 p-6 text-white sm:p-8 lg:col-span-2">
+            <svg class="pointer-events-none absolute -right-28 -top-28 h-[28rem] w-[28rem] text-white/10" viewBox="0 0 400 400" fill="none" stroke="currentColor" aria-hidden="true">
+              <circle cx="200" cy="200" r="60" stroke-width="2"/><circle cx="200" cy="200" r="100" stroke-width="2"/><circle cx="200" cy="200" r="140" stroke-width="2"/><circle cx="200" cy="200" r="180" stroke-width="2"/>
+              <circle cx="200" cy="200" r="14" fill="#F5B83D" stroke="none"/>
+            </svg>
+            <div class="relative">
+              <p id="greet" class="text-sm text-moss-200">Selamat siang</p>
+              <h2 class="mt-1 max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">Siap belajar tanpa terganggu, Rani?</h2>
+              <p class="mt-3 max-w-md text-sm leading-relaxed text-moss-200 sm:text-base">Mulai satu sesi dan biarkan FokusKu memperhatikan tanda distraksi. Tenggat tugas dan ujianmu tetap dijaga.</p>
+              <div class="mt-6 flex flex-wrap gap-3">
+                <a href="#sesi" class="btn btn-sun"><i class="fa-solid fa-play text-xs"></i>Mulai sesi belajar</a>
+                <a href="#tugas" class="btn btn-ondark">Lihat tugas dan ujian</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center justify-center rounded-2xl border border-ink-line bg-white p-6 text-center">
+            <p class="text-sm font-semibold text-ink-soft">Target fokus hari ini</p>
+            <div class="relative my-4 h-36 w-36">
+              <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90" aria-hidden="true">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#DCE3DE" stroke-width="10"/>
+                <circle id="goalRing" cx="60" cy="60" r="52" fill="none" stroke="#16705B" stroke-width="10" stroke-linecap="round"/>
+              </svg>
+              <div class="absolute inset-0 grid place-content-center"><p id="goalPct" class="font-display text-3xl font-extrabold">0%</p></div>
+            </div>
+            <p id="goalText" class="text-sm text-ink-soft"></p>
+            <p id="streakChip" class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sun-100 px-3 py-1 text-xs font-bold text-sun-700"><i class="fa-solid fa-fire"></i><span></span></p>
+          </div>
+        </div>
+
+        <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div class="rounded-2xl border border-ink-line bg-white p-4">
+            <p class="flex items-center gap-2 text-xs font-semibold text-ink-soft"><span class="grid h-7 w-7 place-items-center rounded-lg bg-moss-100 text-moss-700"><i class="fa-solid fa-hourglass-half"></i></span>Fokus hari ini</p>
+            <p id="statFocus" class="mt-3 font-display text-2xl font-extrabold">0 m</p>
+          </div>
+          <div class="rounded-2xl border border-ink-line bg-white p-4">
+            <p class="flex items-center gap-2 text-xs font-semibold text-ink-soft"><span class="grid h-7 w-7 place-items-center rounded-lg bg-sun-100 text-sun-700"><i class="fa-solid fa-triangle-exclamation"></i></span>Distraksi hari ini</p>
+            <p id="statDist" class="mt-3 font-display text-2xl font-extrabold">0</p>
+          </div>
+          <div class="rounded-2xl border border-ink-line bg-white p-4">
+            <p class="flex items-center gap-2 text-xs font-semibold text-ink-soft"><span class="grid h-7 w-7 place-items-center rounded-lg bg-sky-100 text-sky-700"><i class="fa-solid fa-pen-to-square"></i></span>Tugas aktif</p>
+            <p id="statTasks" class="mt-3 font-display text-2xl font-extrabold">0</p>
+          </div>
+          <div class="rounded-2xl border border-ink-line bg-white p-4">
+            <p class="flex items-center gap-2 text-xs font-semibold text-ink-soft"><span class="grid h-7 w-7 place-items-center rounded-lg bg-violet-100 text-violet-700"><i class="fa-solid fa-graduation-cap"></i></span>Ujian terdekat</p>
+            <p id="statExam" class="mt-3 font-display text-2xl font-extrabold">-</p>
+            <p id="statExamSub" class="mt-0.5 truncate text-xs text-ink-soft"></p>
+          </div>
+        </div>
+
+        <div class="mt-5 grid gap-5 lg:grid-cols-3">
+          <div class="rounded-2xl border border-ink-line bg-white p-5 lg:col-span-2">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="font-display text-lg font-bold">Tenggat terdekat</h2>
+              <a href="#tugas" class="text-sm font-semibold text-moss-700 hover:underline">Lihat semua</a>
+            </div>
+            <ul id="dashDeadlines" class="space-y-2.5"></ul>
+          </div>
+          <div class="space-y-5">
+            <div class="rounded-2xl border border-ink-line bg-white p-5">
+              <h2 class="font-display text-lg font-bold">Fokus minggu ini</h2>
+              <p class="text-xs text-ink-soft">Menit belajar per hari</p>
+              <div id="miniChart" class="mt-4 flex h-36 items-end gap-2"></div>
+            </div>
+            <div class="rounded-2xl border border-moss-100 bg-moss-50 p-5">
+              <p class="flex items-center gap-2 font-bold"><i class="fa-solid fa-shield-halved text-moss-600"></i>Privasi kamu terjaga</p>
+              <p class="mt-2 text-sm leading-relaxed text-ink-soft">Kamera hanya menyala selama sesi, setelah kamu mengizinkan. Videonya diproses di perangkat, tidak disimpan, dan tidak dikirim ke server.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SESI FOKUS ============ -->
+      <section data-view="sesi" class="hidden" aria-label="Sesi fokus">
+        <!-- Setup -->
+        <div id="sessionSetup">
+          <div class="grid gap-5 lg:grid-cols-5">
+            <div class="rounded-2xl border border-ink-line bg-white p-6 sm:p-8 lg:col-span-3">
+              <h2 class="font-display text-2xl font-bold">Atur sesi belajar</h2>
+              <p class="mt-1 text-sm text-ink-soft">Pilih apa yang akan dipelajari dan berapa lama. Kamera hanya aktif selama sesi.</p>
+
+              <label for="topicSelect" class="mb-2 mt-6 block text-sm font-semibold">Yang mau dipelajari</label>
+              <select id="topicSelect" class="field"></select>
+
+              <p class="mb-2 mt-6 text-sm font-semibold">Durasi</p>
+              <div id="durationChips" class="flex flex-wrap gap-2"></div>
+
+              <div class="mt-7 space-y-4 border-t border-ink-line pt-6">
+                <label class="flex cursor-pointer items-start justify-between gap-4">
+                  <span>
+                    <span class="block text-sm font-semibold">Mode demo</span>
+                    <span class="block text-xs text-ink-soft">Waktu berjalan 60 kali lebih cepat. Sesi 25 menit selesai sekitar 25 detik.</span>
+                  </span>
+                  <input id="optDemo" type="checkbox" class="switch" checked />
+                </label>
+                <label class="flex cursor-pointer items-start justify-between gap-4">
+                  <span>
+                    <span class="block text-sm font-semibold">Distraksi acak otomatis</span>
+                    <span class="block text-xs text-ink-soft">Sistem memunculkan distraksi simulasi tiap beberapa detik.</span>
+                  </span>
+                  <input id="optAuto" type="checkbox" class="switch" />
+                </label>
+              </div>
+
+              <button data-action="start-flow" class="btn btn-primary mt-8 w-full !py-3.5 text-base sm:w-auto"><i class="fa-solid fa-play text-xs"></i>Mulai sesi</button>
+            </div>
+
+            <div class="space-y-5 lg:col-span-2">
+              <div class="rounded-2xl border border-ink-line bg-white p-6">
+                <h2 class="font-display text-lg font-bold">Cara kerjanya</h2>
+                <ol class="mt-4 space-y-4 text-sm">
+                  <li class="flex gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-moss-100 text-xs font-bold text-moss-700">1</span><span><b>Izinkan kamera.</b><br /><span class="text-ink-soft">Kamu yang memutuskan, setiap kali sesi dimulai.</span></span></li>
+                  <li class="flex gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-moss-100 text-xs font-bold text-moss-700">2</span><span><b>FokusKu memantau distraksi.</b><br /><span class="text-ink-soft">Memegang HP, menoleh dari layar, atau meninggalkan meja.</span></span></li>
+                  <li class="flex gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-moss-100 text-xs font-bold text-moss-700">3</span><span><b>Dapat peringatan dan ringkasan.</b><br /><span class="text-ink-soft">Lihat durasi fokus dan jumlah distraksi setelah sesi selesai.</span></span></li>
+                </ol>
+              </div>
+              <div class="rounded-2xl border border-moss-100 bg-moss-50 p-6 text-sm leading-relaxed text-ink-soft">
+                <p class="mb-1 flex items-center gap-2 font-bold text-ink"><i class="fa-solid fa-lock text-moss-600"></i>Tidak ada rekaman</p>
+                Video diproses langsung di perangkat dan tidak pernah disimpan atau dikirim.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active session -->
+        <div id="sessionActive" class="hidden">
+          <div class="grid gap-5 lg:grid-cols-5">
+            <div class="space-y-4 lg:col-span-3">
+              <div id="camCard" class="relative aspect-video overflow-hidden rounded-3xl bg-moss-950 shadow-lg">
+                <svg id="camSvg" data-state="focus" viewBox="0 0 640 360" class="absolute inset-0 h-full w-full" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="camBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12352E"/><stop offset="1" stop-color="#071F1A"/></linearGradient>
+                    <pattern id="camGrid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#fff" stroke-opacity=".05"/></pattern>
+                  </defs>
+                  <rect width="640" height="360" fill="url(#camBg)"/>
+                  <rect width="640" height="360" fill="url(#camGrid)"/>
+                  <g id="camPerson">
+                    <path d="M170 360C170 282 232 254 320 254C408 254 470 282 470 360Z" fill="#245F52"/>
+                    <rect x="300" y="214" width="40" height="48" rx="14" fill="#2B6F61"/>
+                    <ellipse cx="320" cy="164" rx="50" ry="60" fill="#2E7A69"/>
+                    <path d="M301 158L320 176L339 158M306 198L320 203L334 198M320 176V203" stroke="#BFE8DC" stroke-opacity=".5" fill="none"/>
+                    <g fill="#BFE8DC">
+                      <circle cx="301" cy="158" r="3.5"/><circle cx="339" cy="158" r="3.5"/><circle cx="320" cy="176" r="3"/>
+                      <circle cx="306" cy="198" r="2.5"/><circle cx="320" cy="203" r="2.5"/><circle cx="334" cy="198" r="2.5"/>
+                      <circle cx="276" cy="176" r="2"/><circle cx="364" cy="176" r="2"/><circle cx="290" cy="214" r="2"/><circle cx="350" cy="214" r="2"/><circle cx="320" cy="224" r="2"/>
+                    </g>
+                    <g id="camBoxFace" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M262 114V98H278M362 98H378V114M378 214V230H362M278 230H262V214"/>
+                    </g>
+                  </g>
+                  <g id="camPhone">
+                    <rect x="388" y="270" width="52" height="96" rx="9" fill="#0B1311" stroke="#78C0AE" stroke-width="2"/>
+                    <rect x="394" y="278" width="40" height="70" rx="4" fill="#F5B83D" fill-opacity=".85"/>
+                  </g>
+                  <rect id="camBoxLost" x="262" y="98" width="116" height="132" rx="8" fill="none" stroke="#F0806B" stroke-width="3" stroke-dasharray="8 7"/>
+                </svg>
+                <div class="scanline"></div>
+
+                <div id="camBadge" class="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/45 px-3 py-1.5 text-xs text-white backdrop-blur">
+                  <span class="rec-dot"></span>Kamera aktif, diproses di perangkat
+                </div>
+                <div id="camStatus" class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-moss-500/90 px-3 py-1.5 text-xs font-bold text-white"><i class="fa-solid fa-eye"></i>Fokus</div>
+
+                <div id="alertBanner" class="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-2xl bg-sun-400 p-3.5 text-ink shadow-lg" role="alert">
+                  <i id="alertIcon" class="fa-solid fa-mobile-screen text-lg"></i>
+                  <p id="alertText" class="text-sm font-bold"></p>
+                </div>
+
+                <div id="camOff" class="absolute inset-0 hidden place-content-center bg-moss-950 p-6 text-center text-moss-200">
+                  <i class="fa-solid fa-video-slash mb-3 text-3xl text-moss-300"></i>
+                  <p class="font-bold text-white">Kamera nonaktif</p>
+                  <p class="mt-1 max-w-xs text-sm">Sesi berjalan tanpa deteksi otomatis. Kamu bisa mencatat distraksi secara manual.</p>
+                </div>
+                <div id="camPaused" class="absolute inset-0 hidden place-content-center bg-moss-950/85 p-6 text-center text-moss-200 backdrop-blur-sm">
+                  <i class="fa-solid fa-pause mb-3 text-3xl text-moss-300"></i>
+                  <p class="font-bold text-white">Sesi dijeda</p>
+                  <p class="mt-1 text-sm">Kamera berhenti memantau sampai kamu melanjutkan.</p>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-ink-line bg-white p-4">
+                <div class="mb-3 flex flex-wrap items-center gap-2">
+                  <span class="rounded-md bg-sun-100 px-2 py-0.5 text-[11px] font-bold text-sun-700">Panel demo</span>
+                  <p id="demoHint" class="text-xs text-ink-soft">Simulasikan tanda distraksi seperti yang dikenali kamera.</p>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <button data-action="sim" data-type="hp" class="btn btn-ghost !flex-col !gap-1.5 !px-2 !py-3 !text-xs"><i class="fa-solid fa-mobile-screen text-base text-sun-600"></i>Pegang HP</button>
+                  <button data-action="sim" data-type="menoleh" class="btn btn-ghost !flex-col !gap-1.5 !px-2 !py-3 !text-xs"><i class="fa-solid fa-arrows-left-right text-base text-sun-600"></i>Menoleh</button>
+                  <button data-action="sim" data-type="pergi" class="btn btn-ghost !flex-col !gap-1.5 !px-2 !py-3 !text-xs"><i class="fa-solid fa-person-walking text-base text-sun-600"></i>Pergi dari layar</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-4 lg:col-span-2">
+              <div class="rounded-2xl border border-ink-line bg-white p-6 text-center">
+                <p id="sessTopic" class="text-sm font-semibold text-ink-soft"></p>
+                <div class="relative mx-auto my-4 h-56 w-56">
+                  <svg viewBox="0 0 200 200" class="h-full w-full -rotate-90" aria-hidden="true">
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="#DCE3DE" stroke-width="12"/>
+                    <circle id="ringProg" cx="100" cy="100" r="90" fill="none" stroke="#16705B" stroke-width="12" stroke-linecap="round"/>
+                  </svg>
+                  <div class="absolute inset-0 grid place-content-center">
+                    <p id="sessTime" class="font-display text-5xl font-extrabold tabular-nums">25:00</p>
+                    <p id="sessState" class="mt-1 text-xs font-semibold text-moss-600">Sedang fokus</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="rounded-xl bg-moss-50 p-2.5"><p class="text-xs text-ink-soft">Berjalan</p><p id="sessElapsed" class="font-display text-lg font-extrabold">0 m</p></div>
+                  <div class="rounded-xl bg-sun-50 p-2.5"><p class="text-xs text-ink-soft">Distraksi</p><p id="sessDist" class="font-display text-lg font-extrabold">0</p></div>
+                  <div class="rounded-xl bg-moss-50 p-2.5"><p class="text-xs text-ink-soft">Skor fokus</p><p id="sessScore" class="font-display text-lg font-extrabold">100</p></div>
+                </div>
+                <div class="mt-5 flex gap-2">
+                  <button id="btnPause" data-action="toggle-pause" class="btn btn-ghost flex-1"><i class="fa-solid fa-pause text-xs"></i>Jeda</button>
+                  <button data-action="end-session" class="btn btn-dark flex-1"><i class="fa-solid fa-stop text-xs"></i>Selesai</button>
+                </div>
+              </div>
+              <div class="rounded-2xl border border-ink-line bg-white p-5">
+                <h2 class="font-display text-lg font-bold">Log deteksi</h2>
+                <ul id="sessLog" class="mt-3 space-y-2.5"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TUGAS & UJIAN ============ -->
+      <section data-view="tugas" class="hidden" aria-label="Tugas dan ujian">
+        <div class="grid gap-5 lg:grid-cols-3">
+          <div class="lg:col-span-2">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div id="taskTabs" class="flex gap-1 overflow-x-auto rounded-2xl border border-ink-line bg-white p-1" role="tablist" aria-label="Filter daftar">
+                <button role="tab" data-action="filter" data-filter="aktif"><span>Aktif</span> <span class="count ml-1 text-xs opacity-70"></span></button>
+                <button role="tab" data-action="filter" data-filter="tugas"><span>Tugas</span> <span class="count ml-1 text-xs opacity-70"></span></button>
+                <button role="tab" data-action="filter" data-filter="ujian"><span>Ujian</span> <span class="count ml-1 text-xs opacity-70"></span></button>
+                <button role="tab" data-action="filter" data-filter="selesai"><span>Selesai</span> <span class="count ml-1 text-xs opacity-70"></span></button>
+              </div>
+              <button data-action="open-task" class="btn btn-primary"><i class="fa-solid fa-plus text-xs"></i>Tambah</button>
+            </div>
+            <ul id="taskList" class="space-y-2.5"></ul>
+          </div>
+
+          <div class="space-y-5">
+            <div class="rounded-2xl border border-ink-line bg-white p-5">
+              <h2 class="font-display text-lg font-bold">Jadwal ujian</h2>
+              <ol id="examList" class="mt-4 space-y-3"></ol>
+            </div>
+            <div class="rounded-2xl border border-ink-line bg-white p-5">
+              <h2 class="font-display text-lg font-bold">Pengingat</h2>
+              <p class="text-xs text-ink-soft">Pilih kapan FokusKu mengingatkanmu.</p>
+              <div class="mt-2 divide-y divide-ink-line">
+                <label class="flex cursor-pointer items-center justify-between gap-4 py-3"><span class="text-sm font-medium">3 hari sebelum tenggat</span><input type="checkbox" class="switch" data-remind="r3d" checked /></label>
+                <label class="flex cursor-pointer items-center justify-between gap-4 py-3"><span class="text-sm font-medium">1 hari sebelum tenggat</span><input type="checkbox" class="switch" data-remind="r1d" checked /></label>
+                <label class="flex cursor-pointer items-center justify-between gap-4 py-3"><span class="text-sm font-medium">3 jam sebelum tenggat</span><input type="checkbox" class="switch" data-remind="r3h" checked /></label>
+                <label class="flex cursor-pointer items-center justify-between gap-4 py-3"><span class="text-sm font-medium">Peringatan saat distraksi terdeteksi</span><input type="checkbox" class="switch" data-remind="alertDist" checked /></label>
+              </div>
+              <button data-action="test-reminder" class="btn btn-ghost mt-3 w-full"><i class="fa-regular fa-bell"></i>Coba kirim pengingat</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RINGKASAN ============ -->
+      <section data-view="ringkasan" class="hidden" aria-label="Ringkasan sesi belajar">
+        <div id="sumStats" class="grid grid-cols-2 gap-3 lg:grid-cols-4"></div>
+
+        <div class="mt-5 grid gap-5 lg:grid-cols-3">
+          <div class="rounded-2xl border border-ink-line bg-white p-5 sm:p-6 lg:col-span-2">
+            <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="font-display text-lg font-bold">7 hari terakhir</h2>
+                <p id="chartCaption" class="text-xs text-ink-soft"></p>
+              </div>
+              <div id="metricTabs" class="flex gap-1 rounded-xl border border-ink-line bg-canvas p-1" role="tablist" aria-label="Pilih data grafik">
+                <button role="tab" data-action="metric" data-metric="min"></button>
+                <button role="tab" data-action="metric" data-metric="dist"></button>
+              </div>
+            </div>
+            <div id="weekChart" class="flex h-52 items-end gap-2 sm:gap-4"></div>
+          </div>
+
+          <div class="rounded-2xl border border-ink-line bg-white p-5 sm:p-6">
+            <h2 class="font-display text-lg font-bold">Jenis distraksi</h2>
+            <div id="distBreakdown" class="mt-4 space-y-4"></div>
+            <p id="insight" class="mt-5 rounded-xl bg-moss-50 p-3.5 text-sm leading-relaxed text-ink-soft"></p>
+          </div>
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-ink-line bg-white p-5 sm:p-6">
+          <h2 class="font-display text-lg font-bold">Riwayat sesi</h2>
+          <ul id="historyList" class="mt-4 space-y-2.5"></ul>
+        </div>
+      </section>
+
+      <p class="mt-10 text-center text-xs text-ink-mute">FokusKu adalah mockup MVP. Semua data di halaman ini hanya contoh dan kembali ke awal saat halaman dimuat ulang.</p>
+    </main>
+  </div>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-ink-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navigasi utama">
+    <div class="grid grid-cols-4">
+      <a href="#beranda" data-nav="beranda" class="tab-link"><i class="fa-solid fa-house"></i>Beranda</a>
+      <a href="#sesi" data-nav="sesi" class="tab-link"><i class="fa-solid fa-bullseye"></i>Sesi</a>
+      <a href="#tugas" data-nav="tugas" class="tab-link"><i class="fa-solid fa-list-check"></i>Tugas</a>
+      <a href="#ringkasan" data-nav="ringkasan" class="tab-link"><i class="fa-solid fa-chart-column"></i>Ringkasan</a>
+    </div>
+  </nav>
+
+  <!-- ============ DIALOGS ============ -->
+  <dialog id="modalCamera" aria-labelledby="camTitle">
+    <div class="w-[min(92vw,28rem)] rounded-3xl bg-white p-6 shadow-2xl">
+      <div class="grid h-14 w-14 place-items-center rounded-2xl bg-moss-100 text-2xl text-moss-700"><i class="fa-solid fa-camera"></i></div>
+      <h2 id="camTitle" class="mt-4 font-display text-2xl font-bold">Izinkan FokusKu memakai kamera?</h2>
+      <p class="mt-2 text-sm text-ink-soft">Kamera dipakai untuk mengenali tanda distraksi selama sesi berlangsung.</p>
+      <ul class="mt-4 space-y-2.5 text-sm">
+        <li class="flex gap-2.5"><i class="fa-solid fa-circle-check mt-0.5 text-moss-600"></i>Hanya aktif selama sesi belajar</li>
+        <li class="flex gap-2.5"><i class="fa-solid fa-circle-check mt-0.5 text-moss-600"></i>Video diproses di perangkatmu</li>
+        <li class="flex gap-2.5"><i class="fa-solid fa-circle-check mt-0.5 text-moss-600"></i>Tidak disimpan dan tidak dikirim ke server</li>
+      </ul>
+      <div class="mt-6 grid gap-2 sm:grid-cols-2">
+        <button data-action="cam-deny" class="btn btn-ghost">Tanpa kamera</button>
+        <button data-action="cam-allow" class="btn btn-primary" autofocus>Izinkan</button>
+      </div>
+      <p class="mt-3 text-[11px] text-ink-mute">Ini mockup, jadi kamera sungguhan tidak diakses.</p>
+    </div>
+  </dialog>
+
+  <dialog id="modalTask" aria-labelledby="taskTitle">
+    <form id="taskForm" class="max-h-[90dvh] w-[min(92vw,30rem)] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl" novalidate>
+      <div class="flex items-center justify-between">
+        <h2 id="taskTitle" class="font-display text-2xl font-bold">Tambah tugas atau ujian</h2>
+        <button type="button" data-action="close-dialog" class="grid h-9 w-9 place-items-center rounded-lg text-ink-soft hover:bg-canvas" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <fieldset class="mt-5">
+        <legend class="mb-2 text-sm font-semibold">Jenis</legend>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="cursor-pointer"><input type="radio" name="type" value="tugas" class="peer sr-only" checked /><span class="flex items-center justify-center gap-2 rounded-xl border border-ink-line py-2.5 text-sm font-semibold transition peer-checked:border-moss-700 peer-checked:bg-moss-700 peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-moss-500"><i class="fa-solid fa-pen-to-square"></i>Tugas</span></label>
+          <label class="cursor-pointer"><input type="radio" name="type" value="ujian" class="peer sr-only" /><span class="flex items-center justify-center gap-2 rounded-xl border border-ink-line py-2.5 text-sm font-semibold transition peer-checked:border-moss-700 peer-checked:bg-moss-700 peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-moss-500"><i class="fa-solid fa-graduation-cap"></i>Ujian</span></label>
+        </div>
+      </fieldset>
+
+      <div class="mt-4">
+        <label for="fTitle" class="mb-1.5 block text-sm font-semibold">Judul</label>
+        <input id="fTitle" name="title" class="field" placeholder="Contoh: Laporan praktikum Basis Data" maxlength="80" autocomplete="off" autofocus />
+        <p id="fError" class="mt-1.5 hidden text-xs font-semibold text-coral-600">Isi judulnya dulu ya.</p>
+      </div>
+      <div class="mt-4">
+        <label for="fCourse" class="mb-1.5 block text-sm font-semibold">Mata kuliah</label>
+        <select id="fCourse" name="course" class="field"></select>
+      </div>
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <div><label for="fDate" class="mb-1.5 block text-sm font-semibold">Tanggal</label><input id="fDate" name="date" type="date" class="field" required /></div>
+        <div><label for="fTime" class="mb-1.5 block text-sm font-semibold">Jam</label><input id="fTime" name="time" type="time" class="field" required /></div>
+      </div>
+      <fieldset class="mt-4">
+        <legend class="mb-2 text-sm font-semibold">Prioritas</legend>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="cursor-pointer"><input type="radio" name="priority" value="rendah" class="peer sr-only" /><span class="block rounded-xl border border-ink-line py-2 text-center text-sm font-semibold transition peer-checked:border-moss-400 peer-checked:bg-moss-100 peer-checked:text-moss-800 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-moss-500">Rendah</span></label>
+          <label class="cursor-pointer"><input type="radio" name="priority" value="sedang" class="peer sr-only" checked /><span class="block rounded-xl border border-ink-line py-2 text-center text-sm font-semibold transition peer-checked:border-sun-400 peer-checked:bg-sun-100 peer-checked:text-sun-700 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-moss-500">Sedang</span></label>
+          <label class="cursor-pointer"><input type="radio" name="priority" value="tinggi" class="peer sr-only" /><span class="block rounded-xl border border-ink-line py-2 text-center text-sm font-semibold transition peer-checked:border-coral-400 peer-checked:bg-coral-100 peer-checked:text-coral-700 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-moss-500">Tinggi</span></label>
+        </div>
+      </fieldset>
+
+      <div class="mt-6 flex gap-2">
+        <button type="button" data-action="close-dialog" class="btn btn-ghost flex-1">Batal</button>
+        <button type="submit" class="btn btn-primary flex-1">Simpan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="modalSummary" data-lock aria-labelledby="sumTitle">
+    <div class="max-h-[90dvh] w-[min(92vw,30rem)] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+      <div class="grid h-14 w-14 place-items-center rounded-2xl bg-sun-100 text-2xl text-sun-700"><i class="fa-solid fa-flag-checkered"></i></div>
+      <h2 id="sumTitle" class="mt-4 font-display text-2xl font-bold">Sesi selesai</h2>
+      <p id="sumSub" class="mt-1 text-sm text-ink-soft"></p>
+      <div id="sumTiles" class="mt-5 grid grid-cols-3 gap-2"></div>
+      <div id="sumTypes" class="mt-4 space-y-1.5 text-sm"></div>
+      <div class="mt-6 grid gap-2 sm:grid-cols-2">
+        <button data-action="discard-summary" class="btn btn-ghost">Buang</button>
+        <button data-action="save-summary" class="btn btn-primary" autofocus>Simpan ke ringkasan</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+  (() => {
+    'use strict';
+
+    /* ================= Helpers ================= */
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const pad = (n) => String(n).padStart(2, '0');
+    const DAY = 864e5;
+    const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    const dayDiff = (d) => Math.round((startOfDay(d) - startOfDay(new Date())) / DAY);
+    const clock = (sec) => pad(Math.floor(sec / 60)) + ':' + pad(Math.floor(sec % 60));
+    const hm = (d) => { const x = new Date(d); return pad(x.getHours()) + '.' + pad(x.getMinutes()); };
+    const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const dateLabel = (d) => new Date(d).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+    const dur = (m) => (m >= 60 ? Math.floor(m / 60) + ' j ' + (m % 60) + ' m' : m + ' m');
+    const sum = (arr, fn) => arr.reduce((a, x) => a + fn(x), 0);
+    const totalDist = (t) => t.hp + t.menoleh + t.pergi;
+    const inputDate = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const byDue = (a, b) => new Date(a.due) - new Date(b.due);
+    const scoreOf = (min, dist) => Math.max(30, Math.min(100, Math.round(100 - (dist / Math.max(1, min / 10)) * 12)));
+    const scoreTone = (s) => (s >= 85 ? 'bg-moss-100 text-moss-800' : s >= 70 ? 'bg-sun-100 text-sun-700' : 'bg-coral-100 text-coral-700');
+
+    /* ================= Data contoh ================= */
+    const COURSES = ['Algoritma & Pemrograman', 'Basis Data', 'Struktur Data', 'Rekayasa Perangkat Lunak', 'Jaringan Komputer', 'Etika Profesi', 'Aljabar Linear'];
+
+    const DIST = {
+      hp: { label: 'Memegang HP', pill: 'Terdeteksi memegang HP', icon: 'fa-mobile-screen', bar: 'bg-sun-500', alert: 'Terdeteksi memegang HP. Yuk, kembali fokus!', tip: 'Taruh HP di luar jangkauan atau aktifkan mode senyap selama sesi.' },
+      menoleh: { label: 'Menoleh dari layar', pill: 'Menoleh ke samping', icon: 'fa-arrows-left-right', bar: 'bg-moss-400', alert: 'Kamu menoleh dari layar. Fokus lagi, ya!', tip: 'Rapikan meja dan pilih tempat belajar yang lebih tenang.' },
+      pergi: { label: 'Meninggalkan layar', pill: 'Wajah tidak terdeteksi', icon: 'fa-person-walking', bar: 'bg-coral-500', alert: 'Kamu terlihat meninggalkan layar. Lanjutkan saat sudah siap.', tip: 'Siapkan minum dan camilan sebelum mulai supaya tidak sering beranjak.' }
+    };
+
+    const inDays = (n, h, m) => { const d = new Date(); d.setDate(d.getDate() + n); d.setHours(h, m, 0, 0); return d.toISOString(); };
+    const ago = (n, h, m) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, m, 0, 0); return Math.min(d.getTime(), Date.now() - 36e5); };
+
+    let nextId = 100;
+    const tasks = [
+      { id: 1, type: 'tugas', title: 'Laporan praktikum Basis Data', course: 'Basis Data', due: inDays(1, 23, 59), priority: 'tinggi', done: false },
+      { id: 2, type: 'ujian', title: 'UTS Rekayasa Perangkat Lunak', course: 'Rekayasa Perangkat Lunak', due: inDays(3, 9, 0), priority: 'tinggi', done: false },
+      { id: 3, type: 'tugas', title: 'Kuis online Algoritma', course: 'Algoritma & Pemrograman', due: inDays(0, 23, 59), priority: 'sedang', done: false },
+      { id: 4, type: 'tugas', title: 'Esai Etika Profesi', course: 'Etika Profesi', due: inDays(5, 17, 0), priority: 'rendah', done: false },
+      { id: 5, type: 'ujian', title: 'UTS Struktur Data', course: 'Struktur Data', due: inDays(8, 13, 0), priority: 'tinggi', done: false },
+      { id: 6, type: 'tugas', title: 'Presentasi kelompok Jaringan Komputer', course: 'Jaringan Komputer', due: inDays(6, 10, 0), priority: 'sedang', done: false },
+      { id: 7, type: 'ujian', title: 'UAS Basis Data', course: 'Basis Data', due: inDays(21, 8, 0), priority: 'sedang', done: false },
+      { id: 8, type: 'tugas', title: 'Latihan soal Aljabar Linear', course: 'Aljabar Linear', due: inDays(-1, 20, 0), priority: 'rendah', done: true }
+    ];
+
+    const sessions = [
+      { id: 1, topic: 'Struktur Data', min: 50, at: ago(6, 19, 0), types: { hp: 2, menoleh: 1, pergi: 1 } },
+      { id: 2, topic: 'Basis Data', min: 45, at: ago(5, 8, 30), types: { hp: 3, menoleh: 2, pergi: 1 } },
+      { id: 3, topic: 'Algoritma & Pemrograman', min: 25, at: ago(5, 15, 0), types: { hp: 1, menoleh: 1, pergi: 0 } },
+      { id: 4, topic: 'Rekayasa Perangkat Lunak', min: 60, at: ago(4, 10, 0), types: { hp: 2, menoleh: 1, pergi: 0 } },
+      { id: 5, topic: 'Jaringan Komputer', min: 40, at: ago(3, 20, 0), types: { hp: 3, menoleh: 1, pergi: 1 } },
+      { id: 6, topic: 'Struktur Data', min: 75, at: ago(2, 9, 0), types: { hp: 1, menoleh: 1, pergi: 0 } },
+      { id: 7, topic: 'Basis Data', min: 50, at: ago(1, 13, 0), types: { hp: 2, menoleh: 1, pergi: 0 } },
+      { id: 8, topic: 'Rekayasa Perangkat Lunak', min: 25, at: ago(1, 19, 30), types: { hp: 1, menoleh: 0, pergi: 0 } },
+      { id: 9, topic: 'Algoritma & Pemrograman', min: 45, at: ago(0, 7, 30), types: { hp: 2, menoleh: 1, pergi: 0 } }
+    ];
+
+    const state = {
+      filter: 'aktif',
+      metric: 'min',
+      camGranted: false,
+      remind: { r3d: true, r1d: true, r3h: true, alertDist: true },
+      cfg: { min: 25, demo: true, auto: false }
+    };
+    let sess = null;
+    let pendingSummary = null;
+
+    /* ================= Toast ================= */
+    function toast(msg, o = {}) {
+      const tones = {
+        info: ['border-ink-line bg-white', 'bg-moss-100 text-moss-700', 'fa-circle-info'],
+        success: ['border-moss-300 bg-white', 'bg-moss-100 text-moss-700', 'fa-circle-check'],
+        warn: ['border-sun-400 bg-white', 'bg-sun-100 text-sun-700', 'fa-triangle-exclamation']
+      };
+      const [box, chip, ico] = tones[o.tone || 'info'];
+      const el = document.createElement('div');
+      el.className = 'toast pointer-events-auto flex items-start gap-3 rounded-2xl border p-3.5 shadow-lg ' + box;
+      el.setAttribute('role', 'status');
+      el.innerHTML =
+        '<span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl ' + chip + '"><i class="fa-solid ' + (o.icon || ico) + '"></i></span>' +
+        '<div class="min-w-0 flex-1">' + (o.title ? '<p class="text-sm font-bold">' + esc(o.title) + '</p>' : '') +
+        '<p class="text-sm ' + (o.title ? 'text-ink-soft' : 'font-medium') + '">' + esc(msg) + '</p></div>' +
+        '<button type="button" class="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-mute hover:bg-canvas" aria-label="Tutup notifikasi"><i class="fa-solid fa-xmark text-xs"></i></button>';
+      const host = $('#toasts');
+      while (host.children.length >= 3) host.firstChild.remove();
+      host.appendChild(el);
+      const kill = () => { el.classList.add('out'); setTimeout(() => el.remove(), 260); };
+      el.querySelector('button').addEventListener('click', kill);
+      setTimeout(kill, o.ms || 4200);
+    }
+
+    /* ================= Dialog ================= */
+    const openDialog = (id) => { const d = $('#' + id); if (!d.open) d.showModal(); };
+    const closeDialog = (id) => { const d = $('#' + id); if (d.open) d.close(); };
+    $$('dialog').forEach((d) => {
+      d.addEventListener('click', (e) => { if (e.target === d && !d.hasAttribute('data-lock')) d.close(); });
+      d.addEventListener('cancel', (e) => { if (d.hasAttribute('data-lock')) e.preventDefault(); });
+    });
+
+    /* ================= Routing ================= */
+    const VIEWS = { beranda: 'Beranda', sesi: 'Sesi fokus', tugas: 'Tugas & ujian', ringkasan: 'Ringkasan' };
+    const currentView = () => { const k = (location.hash || '#beranda').slice(1); return VIEWS[k] ? k : 'beranda'; };
+
+    function setTitle() {
+      if (sess) document.title = clock(Math.max(0, sess.total - sess.elapsed)) + ' | FokusKu';
+      else document.title = VIEWS[currentView()] + ' | FokusKu';
+    }
+
+    function route() {
+      const view = currentView();
+      $$('[data-view]').forEach((s) => s.classList.toggle('hidden', s.dataset.view !== view));
+      $$('[data-nav]').forEach((a) => {
+        if (a.dataset.nav === view) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      });
+      $('#pageTitle').textContent = VIEWS[view];
+      setTitle();
+      closeBell();
+      window.scrollTo({ top: 0 });
+    }
+    window.addEventListener('hashchange', route);
+
+    /* ================= Tasks ================= */
+    function dueInfo(t) {
+      if (t.done) return { label: 'Selesai', tone: 'done', hours: Infinity };
+      const diff = new Date(t.due) - Date.now();
+      const hours = diff / 36e5;
+      const dd = dayDiff(t.due);
+      if (diff < 0) return { label: 'Terlambat', tone: 'late', hours };
+      if (hours < 1) return { label: Math.max(1, Math.round(hours * 60)) + ' menit lagi', tone: 'urgent', hours };
+      if (dd === 0) return { label: 'Hari ini', tone: 'urgent', hours };
+      if (dd === 1) return { label: 'Besok', tone: 'urgent', hours };
+      return { label: dd + ' hari lagi', tone: dd <= 3 ? 'soon' : 'normal', hours };
+    }
+
+    const TYPE_BADGE = {
+      tugas: '<span class="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-bold text-sky-700"><i class="fa-solid fa-pen-to-square"></i>Tugas</span>',
+      ujian: '<span class="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-bold text-violet-700"><i class="fa-solid fa-graduation-cap"></i>Ujian</span>'
+    };
+    const PRIO = {
+      tinggi: { dot: 'bg-coral-500', label: 'Prioritas tinggi' },
+      sedang: { dot: 'bg-sun-500', label: 'Prioritas sedang' },
+      rendah: { dot: 'bg-moss-400', label: 'Prioritas rendah' }
+    };
+    const TONE = {
+      late: 'bg-coral-100 text-coral-700',
+      urgent: 'bg-sun-100 text-sun-700',
+      soon: 'bg-moss-100 text-moss-800',
+      normal: 'bg-slate-100 text-ink-soft',
+      done: 'bg-moss-50 text-moss-600'
+    };
+
+    function taskRow(t, compact) {
+      const d = dueInfo(t);
+      const p = PRIO[t.priority];
+      return '<li class="group flex items-start gap-3 rounded-xl border border-ink-line bg-white p-3.5 transition hover:shadow-sm ' + (t.done ? 'opacity-60' : '') + '">' +
+        '<button data-action="toggle-task" data-id="' + t.id + '" aria-pressed="' + t.done + '" aria-label="' + (t.done ? 'Tandai belum selesai: ' : 'Tandai selesai: ') + esc(t.title) + '" class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 text-[11px] transition ' + (t.done ? 'border-moss-600 bg-moss-600 text-white' : 'border-ink-mute/60 text-transparent hover:border-moss-600 hover:text-moss-600') + '"><i class="fa-solid fa-check"></i></button>' +
+        '<div class="min-w-0 flex-1">' +
+          '<p class="font-semibold leading-snug ' + (t.done ? 'line-through decoration-ink-mute' : '') + '">' + esc(t.title) + '</p>' +
+          '<p class="mt-0.5 flex flex-wrap gap-x-3 text-xs text-ink-soft"><span>' + esc(t.course) + '</span><span><i class="fa-regular fa-calendar mr-1"></i>' + dateLabel(t.due) + ', ' + hm(t.due) + '</span></p>' +
+          '<div class="mt-2 flex flex-wrap items-center gap-1.5">' + TYPE_BADGE[t.type] +
+            '<span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ' + TONE[d.tone] + '"><i class="fa-regular fa-clock"></i>' + d.label + '</span>' +
+            '<span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-soft"><span class="h-2 w-2 rounded-full ' + p.dot + '"></span>' + p.label + '</span>' +
+          '</div>' +
+        '</div>' +
+        (compact ? '' : '<button data-action="delete-task" data-id="' + t.id + '" class="shrink-0 rounded-lg p-2 text-ink-mute transition hover:bg-coral-50 hover:text-coral-600" aria-label="Hapus ' + esc(t.title) + '"><i class="fa-regular fa-trash-can"></i></button>') +
+      '</li>';
+    }
+
+    const emptyRow = (icon, title, text) =>
+      '<li class="rounded-xl border border-dashed border-ink-line bg-white/60 p-8 text-center"><i class="fa-solid ' + icon + ' text-2xl text-moss-400"></i><p class="mt-3 font-semibold">' + title + '</p><p class="mt-1 text-sm text-ink-soft">' + text + '</p></li>';
+
+    const TAB_ON = 'bg-moss-700 text-white';
+    const TAB_OFF = 'text-ink-soft hover:bg-canvas';
+    const TAB_BASE = 'flex items-center whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition ';
+
+    function renderTasks() {
+      const f = state.filter;
+      const active = tasks.filter((t) => !t.done);
+      const counts = { aktif: active.length, tugas: active.filter((t) => t.type === 'tugas').length, ujian: active.filter((t) => t.type === 'ujian').length, selesai: tasks.filter((t) => t.done).length };
+      const list = tasks.filter((t) => (f === 'selesai' ? t.done : !t.done && (f === 'aktif' || t.type === f))).sort(byDue);
+      if (f === 'selesai') list.reverse();
+
+      const empties = {
+        aktif: ['fa-champagne-glasses', 'Semua beres', 'Tidak ada tugas atau ujian aktif. Tambahkan yang baru kalau ada.'],
+        tugas: ['fa-pen-to-square', 'Belum ada tugas', 'Tekan Tambah untuk mencatat tugas beserta tenggatnya.'],
+        ujian: ['fa-graduation-cap', 'Belum ada ujian', 'Tekan Tambah untuk mencatat jadwal ujianmu.'],
+        selesai: ['fa-circle-check', 'Belum ada yang selesai', 'Centang tugas untuk memindahkannya ke sini.']
+      };
+      $('#taskList').innerHTML = list.length ? list.map((t) => taskRow(t, false)).join('') : emptyRow.apply(null, empties[f]);
+
+      $$('#taskTabs [data-filter]').forEach((b) => {
+        const on = b.dataset.filter === f;
+        b.className = TAB_BASE + (on ? TAB_ON : TAB_OFF);
+        b.setAttribute('aria-selected', String(on));
+        b.querySelector('.count').textContent = counts[b.dataset.filter];
+      });
+    }
+
+    function renderExams() {
+      const exams = tasks.filter((t) => t.type === 'ujian' && !t.done && new Date(t.due) > Date.now()).sort(byDue).slice(0, 4);
+      $('#examList').innerHTML = exams.length
+        ? exams.map((t) =>
+            '<li class="flex items-center gap-3"><div class="w-14 shrink-0 rounded-xl bg-violet-100 py-1.5 text-center text-violet-700"><p class="font-display text-xl font-extrabold leading-none">' + dayDiff(t.due) + '</p><p class="text-[11px] font-semibold">hari</p></div>' +
+            '<div class="min-w-0"><p class="truncate text-sm font-semibold">' + esc(t.title) + '</p><p class="text-xs text-ink-soft">' + dateLabel(t.due) + ', ' + hm(t.due) + '</p></div></li>').join('')
+        : '<li class="text-sm text-ink-soft">Belum ada jadwal ujian. Tambahkan lewat tombol Tambah.</li>';
+    }
+
+    /* ================= Reminders / bell ================= */
+    function reminders() {
+      const r = state.remind;
+      const win = Math.max(r.r3d ? 72 : 0, r.r1d ? 24 : 0, r.r3h ? 3 : 0);
+      if (!win) return [];
+      return tasks.filter((t) => !t.done).map((t) => ({ t: t, info: dueInfo(t) }))
+        .filter((x) => x.info.tone === 'late' || x.info.hours <= win)
+        .sort((a, b) => byDue(a.t, b.t));
+    }
+
+    function renderBell() {
+      const list = reminders();
+      const badge = $('#bellBadge');
+      badge.textContent = list.length;
+      badge.classList.toggle('hidden', !list.length);
+      $('#bellList').innerHTML = list.length
+        ? list.map((x) =>
+            '<li class="flex gap-3 rounded-xl p-2.5 hover:bg-moss-50"><span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl ' + (x.t.type === 'ujian' ? 'bg-violet-100 text-violet-700' : 'bg-sky-100 text-sky-700') + '"><i class="fa-solid ' + (x.t.type === 'ujian' ? 'fa-graduation-cap' : 'fa-pen-to-square') + '"></i></span>' +
+            '<div class="min-w-0"><p class="truncate text-sm font-semibold">' + esc(x.t.title) + '</p><p class="text-xs text-ink-soft">' + x.info.label + ', ' + dateLabel(x.t.due) + ' ' + hm(x.t.due) + '</p></div></li>').join('')
+        : '<li class="p-4 text-center text-sm text-ink-soft">Tidak ada pengingat. Semua tenggat masih jauh.</li>';
+    }
+
+    function closeBell() {
+      $('#bellMenu').classList.add('hidden');
+      $('#bellBtn').setAttribute('aria-expanded', 'false');
+    }
+    function toggleBell() {
+      const m = $('#bellMenu');
+      const open = m.classList.toggle('hidden') === false;
+      $('#bellBtn').setAttribute('aria-expanded', String(open));
+    }
+
+    function testReminder() {
+      const first = reminders()[0] || tasks.filter((t) => !t.done).map((t) => ({ t: t, info: dueInfo(t) })).sort((a, b) => byDue(a.t, b.t))[0];
+      if (!first) { toast('Belum ada tugas aktif untuk diingatkan.'); return; }
+      toast(first.t.title + ': ' + first.info.label.toLowerCase(), { title: 'Pengingat tugas', icon: 'fa-bell', tone: 'warn' });
+    }
+
+    /* ================= Charts ================= */
+    function weekData() {
+      const out = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const key = startOfDay(d).getTime();
+        const ss = sessions.filter((s) => startOfDay(s.at).getTime() === key);
+        out.push({ label: DAYS[d.getDay()], min: sum(ss, (s) => s.min), dist: sum(ss, (s) => totalDist(s.types)), today: i === 0 });
+      }
+      return out;
+    }
+
+    function barChart(data, metric, anim) {
+      const key = metric === 'min' ? 'min' : 'dist';
+      const max = Math.max(1, ...data.map((d) => d[key]));
+      return data.map((d) => {
+        const v = d[key];
+        const pct = v === 0 ? 3 : Math.max(8, Math.round((v / max) * 100));
+        const color = metric === 'min' ? (d.today ? 'bg-moss-600' : 'bg-moss-200') : (d.today ? 'bg-sun-500' : 'bg-sun-100');
+        const unit = metric === 'min' ? 'menit' : 'distraksi';
+        return '<div class="flex h-full min-w-0 flex-1 flex-col items-center gap-1.5">' +
+          '<span class="text-[11px] font-bold ' + (d.today ? 'text-ink' : 'text-ink-mute') + '">' + v + '</span>' +
+          '<div class="flex min-h-0 w-full flex-1 items-end"><div class="' + (anim ? 'bar-in ' : '') + 'w-full rounded-t-lg ' + color + '" style="height:' + pct + '%" title="' + d.label + ': ' + v + ' ' + unit + '"></div></div>' +
+          '<span class="text-xs ' + (d.today ? 'font-bold text-ink' : 'text-ink-soft') + '">' + d.label + '</span></div>';
+      }).join('');
+    }
+
+    /* ================= Dashboard ================= */
+    const C52 = 2 * Math.PI * 52;
+    const GOAL = 120;
+
+    function streak() {
+      const has = (off) => sessions.some((s) => dayDiff(s.at) === -off);
+      let n = 0;
+      let d = has(0) ? 0 : 1;
+      while (has(d)) { n++; d++; }
+      return n;
+    }
+
+    function greeting() {
+      const h = new Date().getHours();
+      return h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
+    }
+
+    function renderDashboard(anim) {
+      $('#greet').textContent = greeting();
+      const today = sessions.filter((s) => dayDiff(s.at) === 0);
+      const todayMin = sum(today, (s) => s.min);
+      const pct = Math.min(100, Math.round((todayMin / GOAL) * 100));
+      const ring = $('#goalRing');
+      ring.style.strokeDasharray = C52;
+      ring.style.strokeDashoffset = C52 * (1 - pct / 100);
+      $('#goalPct').textContent = pct + '%';
+      $('#goalText').textContent = todayMin + ' dari ' + GOAL + ' menit';
+      const st = streak();
+      $('#streakChip span').textContent = st ? 'Beruntun ' + st + ' hari' : 'Mulai runtunan hari ini';
+
+      $('#statFocus').textContent = dur(todayMin);
+      $('#statDist').textContent = sum(today, (s) => totalDist(s.types));
+      const active = tasks.filter((t) => !t.done);
+      $('#statTasks').textContent = active.filter((t) => t.type === 'tugas').length;
+      const exams = active.filter((t) => t.type === 'ujian' && new Date(t.due) > Date.now()).sort(byDue);
+      $('#statExam').textContent = exams.length ? 'H-' + dayDiff(exams[0].due) : '-';
+      $('#statExamSub').textContent = exams.length ? exams[0].title : 'Belum ada jadwal';
+
+      const next = active.slice().sort(byDue).slice(0, 4);
+      $('#dashDeadlines').innerHTML = next.length
+        ? next.map((t) => taskRow(t, true)).join('')
+        : emptyRow('fa-champagne-glasses', 'Semua beres', 'Tidak ada tenggat yang menunggu.');
+      $('#miniChart').innerHTML = barChart(weekData(), 'min', anim);
+    }
+
+    /* ================= Ringkasan ================= */
+    function whenLabel(ts) {
+      const dd = dayDiff(ts);
+      return (dd === 0 ? 'Hari ini' : dd === -1 ? 'Kemarin' : dateLabel(ts)) + ', ' + hm(ts);
+    }
+
+    function renderSummary(anim) {
+      const week = sessions.filter((s) => dayDiff(s.at) >= -6);
+      const totalMin = sum(week, (s) => s.min);
+      const totalD = sum(week, (s) => totalDist(s.types));
+      const avg = week.length ? Math.round(sum(week, (s) => scoreOf(s.min, totalDist(s.types))) / week.length) : 0;
+      const cards = [
+        ['fa-hourglass-half', 'Waktu fokus', dur(totalMin), 'bg-moss-100 text-moss-700'],
+        ['fa-bullseye', 'Skor fokus rata-rata', avg, 'bg-moss-100 text-moss-700'],
+        ['fa-triangle-exclamation', 'Total distraksi', totalD, 'bg-sun-100 text-sun-700'],
+        ['fa-circle-check', 'Sesi selesai', week.length, 'bg-sky-100 text-sky-700']
+      ];
+      $('#sumStats').innerHTML = cards.map((c) =>
+        '<div class="rounded-2xl border border-ink-line bg-white p-4"><p class="flex items-center gap-2 text-xs font-semibold text-ink-soft"><span class="grid h-7 w-7 place-items-center rounded-lg ' + c[3] + '"><i class="fa-solid ' + c[0] + '"></i></span>' + c[1] + '</p><p class="mt-3 font-display text-2xl font-extrabold">' + c[2] + '</p></div>').join('');
+
+      $('#chartCaption').textContent = state.metric === 'min' ? 'Menit belajar per hari' : 'Jumlah distraksi per hari';
+      $$('#metricTabs [data-metric]').forEach((b) => {
+        const on = b.dataset.metric === state.metric;
+        b.textContent = b.dataset.metric === 'min' ? 'Fokus' : 'Distraksi';
+        b.className = 'rounded-lg px-3 py-1.5 text-sm font-semibold transition ' + (on ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink');
+        b.setAttribute('aria-selected', String(on));
+      });
+      $('#weekChart').innerHTML = barChart(weekData(), state.metric, anim);
+
+      const counts = { hp: sum(week, (s) => s.types.hp), menoleh: sum(week, (s) => s.types.menoleh), pergi: sum(week, (s) => s.types.pergi) };
+      const tot = counts.hp + counts.menoleh + counts.pergi;
+      $('#distBreakdown').innerHTML = Object.keys(DIST).map((k) => {
+        const p = tot ? Math.round((counts[k] / tot) * 100) : 0;
+        return '<div><div class="mb-1.5 flex items-center justify-between text-sm"><span class="flex items-center gap-2 font-semibold"><i class="fa-solid ' + DIST[k].icon + ' w-4 text-center text-ink-soft"></i>' + DIST[k].label + '</span><span class="text-ink-soft">' + counts[k] + ' (' + p + '%)</span></div>' +
+          '<div class="h-2 overflow-hidden rounded-full bg-canvas"><div class="h-full rounded-full ' + DIST[k].bar + '" style="width:' + p + '%"></div></div></div>';
+      }).join('');
+      if (tot) {
+        const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+        $('#insight').textContent = 'Distraksi terbanyak: ' + DIST[top].label.toLowerCase() + ' (' + Math.round((counts[top] / tot) * 100) + '%). ' + DIST[top].tip;
+      } else {
+        $('#insight').textContent = 'Belum ada distraksi tercatat. Pertahankan!';
+      }
+
+      const hist = sessions.slice().sort((a, b) => b.at - a.at).slice(0, 6);
+      $('#historyList').innerHTML = hist.length ? hist.map((s) => {
+        const d = totalDist(s.types);
+        const sc = scoreOf(s.min, d);
+        return '<li class="flex items-center gap-3 rounded-xl border border-ink-line p-3">' +
+          '<span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-moss-100 text-moss-700"><i class="fa-solid fa-book-open"></i></span>' +
+          '<div class="min-w-0 flex-1"><p class="truncate font-semibold">' + esc(s.topic) + '</p><p class="text-xs text-ink-soft">' + whenLabel(s.at) + '</p></div>' +
+          '<div class="text-right text-xs text-ink-soft"><p class="font-semibold text-ink">' + dur(s.min) + '</p><p>' + d + ' distraksi</p></div>' +
+          '<span class="w-11 rounded-full px-2 py-1 text-center text-xs font-bold ' + scoreTone(sc) + '" title="Skor fokus">' + sc + '</span></li>';
+      }).join('') : emptyRow('fa-bullseye', 'Belum ada sesi', 'Mulai sesi belajar pertamamu dari menu Sesi fokus.');
+    }
+
+    function renderAll(anim) {
+      renderDashboard(anim);
+      renderTasks();
+      renderExams();
+      renderSummary(anim);
+      renderBell();
+    }
+
+    /* ================= Sesi fokus ================= */
+    const RING_C = 2 * Math.PI * 90;
+
+    function renderDurations() {
+      $('#durationChips').innerHTML = [15, 25, 45, 60].map((m) => {
+        const on = state.cfg.min === m;
+        return '<button type="button" data-action="duration" data-min="' + m + '" aria-pressed="' + on + '" class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition ' + (on ? 'border-moss-700 bg-moss-700 text-white' : 'border-ink-line bg-white hover:border-moss-400') + '">' + m + ' menit</button>';
+      }).join('');
+    }
+
+    function startFlow() {
+      if (sess) return;
+      if (state.camGranted) startSession(true);
+      else openDialog('modalCamera');
+    }
+
+    function startSession(camera) {
+      state.camGranted = state.camGranted || camera;
+      sess = {
+        topic: $('#topicSelect').value,
+        total: state.cfg.min * 60,
+        elapsed: 0,
+        speed: state.cfg.demo ? 60 : 1,
+        camera: camera,
+        paused: false,
+        types: { hp: 0, menoleh: 0, pergi: 0 },
+        log: [],
+        tick: null, camT: null, autoT: null
+      };
+      $('#sessionSetup').classList.add('hidden');
+      $('#sessionActive').classList.remove('hidden');
+      $('#camOff').classList.toggle('hidden', camera);
+      $('#camOff').classList.toggle('grid', !camera);
+      $('#camBadge').classList.toggle('hidden', !camera);
+      $('#camStatus').classList.toggle('hidden', !camera);
+      $('#camPaused').classList.add('hidden');
+      $('#camPaused').classList.remove('grid');
+      $('#demoHint').textContent = camera
+        ? 'Simulasikan tanda distraksi seperti yang dikenali kamera.'
+        : 'Kamera nonaktif. Catat distraksi secara manual dengan tombol di bawah.';
+      $('#sessTopic').textContent = sess.topic;
+      $('#alertBanner').classList.remove('on');
+      setCam('focus');
+      renderLog();
+      updateSessionUI();
+      sess.tick = setInterval(onTick, 1000);
+      scheduleAuto();
+      toast(camera ? 'Kamera aktif. Selamat belajar!' : 'Sesi dimulai tanpa kamera.', { tone: 'success', title: 'Sesi dimulai' });
+    }
+
+    function onTick() {
+      if (!sess || sess.paused) return;
+      sess.elapsed = Math.min(sess.total, sess.elapsed + sess.speed);
+      updateSessionUI();
+      if (sess.elapsed >= sess.total) finishSession(true);
+    }
+
+    function updateSessionUI() {
+      if (!sess) return;
+      const remaining = sess.total - sess.elapsed;
+      const d = totalDist(sess.types);
+      $('#sessTime').textContent = clock(Math.max(0, remaining));
+      const ring = $('#ringProg');
+      ring.style.strokeDasharray = RING_C;
+      ring.style.strokeDashoffset = RING_C * (1 - sess.elapsed / sess.total);
+      $('#sessElapsed').textContent = Math.floor(sess.elapsed / 60) + ' m';
+      $('#sessDist').textContent = d;
+      $('#sessScore').textContent = scoreOf(Math.max(10, sess.elapsed / 60), d);
+      const label = sess.paused ? 'Dijeda' : sess.camT ? 'Distraksi terdeteksi' : 'Sedang fokus';
+      const st = $('#sessState');
+      st.textContent = label;
+      st.className = 'mt-1 text-xs font-semibold ' + (sess.paused ? 'text-ink-mute' : sess.camT ? 'text-sun-600' : 'text-moss-600');
+      $('#btnPause').innerHTML = sess.paused ? '<i class="fa-solid fa-play text-xs"></i>Lanjutkan' : '<i class="fa-solid fa-pause text-xs"></i>Jeda';
+      setTitle();
+    }
+
+    function setCam(s) {
+      $('#camSvg').dataset.state = s;
+      const pill = $('#camStatus');
+      if (s === 'focus') {
+        pill.className = 'absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-moss-500/90 px-3 py-1.5 text-xs font-bold text-white' + (sess && !sess.camera ? ' hidden' : '');
+        pill.innerHTML = '<i class="fa-solid fa-eye"></i>Fokus';
+      } else {
+        pill.className = 'absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-sun-400 px-3 py-1.5 text-xs font-bold text-ink';
+        pill.innerHTML = '<i class="fa-solid ' + DIST[s].icon + '"></i>' + DIST[s].pill;
+      }
+    }
+
+    function renderLog() {
+      if (!sess) return;
+      $('#sessLog').innerHTML = sess.log.length
+        ? sess.log.map((l) =>
+            '<li class="flex items-center gap-3 text-sm"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sun-100 text-sun-700"><i class="fa-solid ' + DIST[l.type].icon + '"></i></span><span class="flex-1 font-medium">' + DIST[l.type].label + '</span><span class="text-xs tabular-nums text-ink-mute">menit ' + clock(l.at) + '</span></li>').join('')
+        : '<li class="rounded-xl bg-moss-50 p-4 text-center text-sm text-ink-soft">Belum ada distraksi. Pertahankan!</li>';
+    }
+
+    function triggerDistraction(type) {
+      if (!sess) return;
+      if (sess.paused) { toast('Lanjutkan sesi dulu untuk mencoba deteksi.'); return; }
+      if (sess.camera && sess.camT) return;
+      sess.types[type]++;
+      sess.log.unshift({ type: type, at: sess.elapsed });
+      const meta = DIST[type];
+      if (sess.camera) {
+        setCam(type);
+        if (state.remind.alertDist) {
+          $('#alertIcon').className = 'fa-solid ' + meta.icon + ' text-lg';
+          $('#alertText').textContent = meta.alert;
+          $('#alertBanner').classList.add('on');
+        }
+        sess.camT = setTimeout(() => {
+          if (!sess) return;
+          sess.camT = null;
+          setCam('focus');
+          $('#alertBanner').classList.remove('on');
+          updateSessionUI();
+        }, 4500);
+      }
+      if (state.remind.alertDist) toast(sess.camera ? meta.alert : 'Distraksi dicatat: ' + meta.label.toLowerCase() + '.', { tone: 'warn', title: 'Distraksi terdeteksi' });
+      renderLog();
+      updateSessionUI();
+    }
+
+    function scheduleAuto() {
+      if (!sess || !state.cfg.auto) return;
+      sess.autoT = setTimeout(() => {
+        if (!sess) return;
+        if (!sess.paused) triggerDistraction(['hp', 'menoleh', 'pergi'][Math.floor(Math.random() * 3)]);
+        scheduleAuto();
+      }, 7000 + Math.random() * 6000);
+    }
+
+    function togglePause() {
+      if (!sess) return;
+      sess.paused = !sess.paused;
+      const cp = $('#camPaused');
+      const show = sess.paused && sess.camera;
+      cp.classList.toggle('hidden', !show);
+      cp.classList.toggle('grid', show);
+      updateSessionUI();
+    }
+
+    function resetSessionUI() {
+      $('#sessionActive').classList.add('hidden');
+      $('#sessionSetup').classList.remove('hidden');
+      $('#alertBanner').classList.remove('on');
+      setTitle();
+    }
+
+    const tile = (label, val, cls) => '<div class="rounded-xl bg-moss-50 p-3 text-center"><p class="text-xs text-ink-soft">' + label + '</p><p class="mt-1 font-display text-xl font-extrabold ' + (cls || '') + '">' + val + '</p></div>';
+
+    function finishSession(completed) {
+      if (!sess) return;
+      const s = sess;
+      clearInterval(s.tick); clearTimeout(s.camT); clearTimeout(s.autoT);
+      sess = null;
+      const min = Math.round(s.elapsed / 60);
+      resetSessionUI();
+      if (min < 1) { toast('Sesi terlalu singkat untuk disimpan.'); return; }
+      pendingSummary = { topic: s.topic, min: min, types: Object.assign({}, s.types), at: Date.now() };
+      const d = totalDist(s.types);
+      const sc = scoreOf(min, d);
+      $('#sumTitle').textContent = completed ? 'Sesi selesai' : 'Sesi dihentikan';
+      $('#sumSub').textContent = s.topic;
+      $('#sumTiles').innerHTML = tile('Durasi', dur(min)) + tile('Distraksi', d) + tile('Skor fokus', sc, sc >= 85 ? 'text-moss-700' : sc >= 70 ? 'text-sun-600' : 'text-coral-600');
+      $('#sumTypes').innerHTML = d
+        ? Object.keys(DIST).filter((k) => s.types[k]).map((k) =>
+            '<div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-lg bg-sun-100 text-sun-700"><i class="fa-solid ' + DIST[k].icon + '"></i></span><span class="flex-1">' + DIST[k].label + '</span><b>' + s.types[k] + 'x</b></div>').join('')
+        : '<p class="rounded-xl bg-moss-50 p-3 text-center text-ink-soft">Tidak ada distraksi. Sesi yang bersih!</p>';
+      openDialog('modalSummary');
+    }
+
+    /* ================= Tambah tugas ================= */
+    function resetTaskForm() {
+      const f = $('#taskForm');
+      f.reset();
+      const t = new Date(); t.setDate(t.getDate() + 1);
+      $('#fDate').value = inputDate(t);
+      $('#fTime').value = '23:59';
+      $('#fError').classList.add('hidden');
+    }
+
+    $('#taskForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const title = String(fd.get('title') || '').trim();
+      if (!title) { $('#fError').classList.remove('hidden'); $('#fTitle').focus(); return; }
+      const due = new Date(fd.get('date') + 'T' + (fd.get('time') || '23:59'));
+      if (isNaN(due.getTime())) { toast('Tanggal atau jam belum valid.', { tone: 'warn' }); return; }
+      tasks.push({ id: nextId++, type: fd.get('type'), title: title, course: fd.get('course'), due: due.toISOString(), priority: fd.get('priority'), done: false });
+      closeDialog('modalTask');
+      state.filter = 'aktif';
+      renderAll();
+      toast(title + ' ditambahkan ke daftar.', { tone: 'success', title: fd.get('type') === 'ujian' ? 'Ujian tersimpan' : 'Tugas tersimpan' });
+    });
+
+    $('#taskForm').addEventListener('change', (e) => {
+      if (e.target.name === 'type') $('#fTime').value = e.target.value === 'ujian' ? '08:00' : '23:59';
+    });
+    $('#fTitle').addEventListener('input', () => $('#fError').classList.add('hidden'));
+
+    /* ================= Events ================= */
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#bellWrap')) closeBell();
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const a = el.dataset.action;
+      switch (a) {
+        case 'toggle-bell': toggleBell(); break;
+        case 'test-reminder': testReminder(); break;
+        case 'filter': state.filter = el.dataset.filter; renderTasks(); break;
+        case 'metric': state.metric = el.dataset.metric; renderSummary(true); break;
+        case 'open-task': resetTaskForm(); openDialog('modalTask'); break;
+        case 'close-dialog': el.closest('dialog').close(); break;
+        case 'toggle-task': {
+          const t = tasks.find((x) => x.id === Number(el.dataset.id));
+          if (!t) break;
+          t.done = !t.done;
+          renderAll();
+          if (t.done) toast(t.title + ' ditandai selesai.', { tone: 'success', title: 'Kerja bagus' });
+          break;
+        }
+        case 'delete-task': {
+          const i = tasks.findIndex((x) => x.id === Number(el.dataset.id));
+          if (i < 0) break;
+          const removed = tasks.splice(i, 1)[0];
+          renderAll();
+          toast(removed.title + ' dihapus.');
+          break;
+        }
+        case 'duration': state.cfg.min = Number(el.dataset.min); renderDurations(); break;
+        case 'start-flow': startFlow(); break;
+        case 'cam-allow': closeDialog('modalCamera'); startSession(true); break;
+        case 'cam-deny': closeDialog('modalCamera'); startSession(false); break;
+        case 'sim': triggerDistraction(el.dataset.type); break;
+        case 'toggle-pause': togglePause(); break;
+        case 'end-session': finishSession(false); break;
+        case 'save-summary': {
+          if (pendingSummary) {
+            sessions.push({ id: nextId++, topic: pendingSummary.topic, min: pendingSummary.min, at: pendingSummary.at, types: pendingSummary.types });
+            pendingSummary = null;
+            renderAll();
+            toast('Sesi tersimpan di ringkasan.', { tone: 'success' });
+          }
+          closeDialog('modalSummary');
+          location.hash = '#ringkasan';
+          break;
+        }
+        case 'discard-summary': pendingSummary = null; closeDialog('modalSummary'); toast('Sesi dibuang.'); break;
+      }
+    });
+
+    document.addEventListener('change', (e) => {
+      const t = e.target;
+      if (t.dataset && t.dataset.remind) { state.remind[t.dataset.remind] = t.checked; renderBell(); }
+      if (t.id === 'optDemo') state.cfg.demo = t.checked;
+      if (t.id === 'optAuto') state.cfg.auto = t.checked;
+    });
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBell(); });
+
+    /* ================= Init ================= */
+    function init() {
+      $('#topicSelect').innerHTML = COURSES.map((c) => '<option>' + esc(c) + '</option>').join('') + '<option>Belajar bebas</option>';
+      $('#fCourse').innerHTML = COURSES.map((c) => '<option>' + esc(c) + '</option>').join('');
+      $('#pageDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      renderDurations();
+      resetTaskForm();
+      route();
+      renderAll(true);
+      setTimeout(() => {
+        const r = reminders()[0];
+        if (r) toast(r.t.title + ': ' + r.info.label.toLowerCase(), { title: 'Pengingat tugas', icon: 'fa-bell', tone: 'warn' });
+      }, 2400);
+    }
+    init();
+  })();
+  </script>
+</body>
+</html>
